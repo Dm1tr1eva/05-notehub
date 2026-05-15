@@ -20,11 +20,9 @@ interface fetchNotesParams {
   search?: string;
 }
 
-interface FetchNotesResponse {
+export interface FetchNotesResponse {
   notes: Note[];
-  totalCount: number;
-  page: number;
-  perPage: number;
+  totalPages: number;
 }
 
 export interface CreateNoteRequest {

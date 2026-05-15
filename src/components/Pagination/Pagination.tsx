@@ -1,5 +1,13 @@
-import ReactPaginate from "react-paginate";
+import type { ComponentType } from "react";
+import ReactPaginateModule from "react-paginate";
+import type { ReactPaginateProps } from "react-paginate";
 import css from "./Pagination.module.css";
+
+type ModuleWithDefault<T> = { default: T };
+
+const ReactPaginate = (
+  ReactPaginateModule as unknown as ModuleWithDefault<ComponentType<ReactPaginateProps>>
+).default;
 
 interface PaginationProps {
   currentPage: number;
@@ -8,11 +16,10 @@ interface PaginationProps {
 }
 
 export default function Pagination({
-  //   currentPage,
+  currentPage,
   pageCount,
   onPageChange,
 }: PaginationProps) {
-    // 
   if (pageCount <= 1) {
     return null;
   }
@@ -35,6 +42,7 @@ export default function Pagination({
       previousClassName={css.previous}
       nextClassName={css.next}
       disabledClassName={css.disabled}
+      forcePage={currentPage}
     />
   );
 }

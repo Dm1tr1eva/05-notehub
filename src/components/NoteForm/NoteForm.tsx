@@ -1,6 +1,8 @@
 import css from "./NoteForm.module.css";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { createNote, type CreateNoteRequest } from "../../services/noteService";
 
 interface NoteFormValues {
   title: string;
@@ -9,9 +11,7 @@ interface NoteFormValues {
 }
 
 interface NoteFormProps {
-  onSubmit: (values: NoteFormValues) => Promise<void>;
   onCancel: () => void;
-  isLoading?: boolean;
 }
 
 const validationSchema = Yup.object().shape({
@@ -25,11 +25,17 @@ const validationSchema = Yup.object().shape({
     .required("Tag is required"),
 });
 
-export default function NoteForm({
-  onSubmit,
-  onCancel,
-  isLoading = false,
-}: NoteFormProps) {
+export default function NoteForm({ onCancel }: NoteFormProps) {
+  const queryClient = useQueryClient();
+
+  const createNoteMutation = useMutation({
+    mutationFn: (noteData: CreateNoteRequest) => createNote(noteData),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["notes"] });
+      onCancel();
+    },
+  });
+
   const initialValues: NoteFormValues = {
     title: "",
     content: "",
@@ -40,18 +46,18 @@ export default function NoteForm({
     <Formik
       initialValues={initialValues}
       validationSchema={validationSchema}
-      onSubmit={onSubmit}
+      onSubmit={(values) => {
+        createNoteMutation.mutate(values);
+      }}
     >
       {({ isSubmitting }) => (
         <Form className={css.form}>
-          {/* Title */}
           <div className={css.formGroup}>
             <label htmlFor="title">Title</label>
             <Field id="title" type="text" name="title" className={css.input} />
             <ErrorMessage name="title" component="span" className={css.error} />
           </div>
 
-          {/* Content */}
           <div className={css.formGroup}>
             <label htmlFor="content">Content</label>
             <Field
@@ -68,7 +74,6 @@ export default function NoteForm({
             />
           </div>
 
-          {/* Tag */}
           <div className={css.formGroup}>
             <label htmlFor="tag">Tag</label>
             <Field id="tag" name="tag" as="select" className={css.select}>
@@ -81,7 +86,6 @@ export default function NoteForm({
             <ErrorMessage name="tag" component="span" className={css.error} />
           </div>
 
-          {/* Button */}
           <div className={css.actions}>
             <button
               type="button"
@@ -94,9 +98,9 @@ export default function NoteForm({
             <button
               type="submit"
               className={css.submitButton}
-              disabled={isSubmitting || isLoading}
+              disabled={isSubmitting || createNoteMutation.isPending}
             >
-              {isSubmitting ? "Creating..." : "Create note"}
+              {createNoteMutation.isPending ? "Creating..." : "Create note"}
             </button>
           </div>
         </Form>
